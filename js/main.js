@@ -1,6 +1,17 @@
 import * as FMSynth from './fmsynth.js';
 import {$C,$H,px,css} from './core.js';
+import {display} from './synthcontrol.js';
 
+
+$('head').append($($C.html.style($C.css.stylesheet({
+	'#fmControl':{
+		border:$C.css.template.border(1, '#ffe'),
+		width:px(300),
+		height:px(200),
+		padding:px(3),
+		margin:px(10)
+	}
+}))));
 
 const sampleValues = [
 	[0, 0],
@@ -32,3 +43,7 @@ $('body').append($($H.markup(
 		))
 	)
 )));
+
+$('body').append($($H.div($C.html.svg({id:'fmControl'}))));
+
+display('#fmControl', spectrum);
