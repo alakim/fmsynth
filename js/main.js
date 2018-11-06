@@ -13,37 +13,25 @@ $('head').append($($C.html.style($C.css.stylesheet({
 	}
 }))));
 
-const sampleValues = [
-	[0, 0],
-	[0, 4],
-	[0, 7],
-	[1, 0],
-	[1, 2],
-	[2, 7]
-]
 
 $('body').append($($H.markup(
-	$H.p('Bessel function sample values:'),
-	$H.table({border:1, cellspacing:0, cellpadding:3},
-		$H.tr($H.th('K'), $H.th('I'), $H.th('J',$C.html.sub('k'),'(I)')),
-		$H.apply(sampleValues, ([k, i])=>$H.tr(
-			$H.td(k), $H.td(i), $H.td(FMSynth.bessel(k,i))
-		))
-	)
+	$H.div(
+		' c:', $H.input({type:'text', 'class':'tbC', value:1}),
+		' m:', $H.input({type:'text', 'class':'tbM', value:2}),
+		' I:', $H.input({type:'text', 'class':'tbI', value:4}),
+		' ', $H.button({'class':'btDraw'}, 'Draw spectrum')
+	),
+	$H.div($C.html.svg({id:'fmControl'}))
 )));
 
-const spectrum = FMSynth.spectrum(1, 2, 4);
+function draw(){
+	const c = parseFloat($('.tbC').val());
+	const m = parseFloat($('.tbM').val());
+	const I = parseFloat($('.tbI').val());
+	display('#fmControl', FMSynth.spectrum(c, m, I));
+}
 
-$('body').append($($H.markup(
-	$H.p('Spectrum for c:1, m:2, I:4'),
-	$H.table({border:1, cellspacing:0, cellpadding:3},
-		$H.tr($H.th('F'), $H.th('A')),
-		$H.apply(spectrum, ({f, a})=>$H.tr(
-			$H.td(f), $H.td(a)
-		))
-	)
-)));
+$('.btDraw').click(draw).end();
 
-$('body').append($($H.div($C.html.svg({id:'fmControl'}))));
+draw();
 
-display('#fmControl', spectrum);
