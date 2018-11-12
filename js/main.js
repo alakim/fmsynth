@@ -6,8 +6,8 @@ import {display} from './synthcontrol.js';
 $('head').append($($C.html.style($C.css.stylesheet({
 	'#fmControl':{
 		border:$C.css.template.border(1, '#ffe'),
-		width:px(300),
-		height:px(200),
+		width:px(600),
+		height:px(400),
 		padding:px(3),
 		margin:px(10)
 	}
@@ -28,7 +28,7 @@ function draw(){
 	const c = parseFloat($('.tbC').val());
 	const m = parseFloat($('.tbM').val());
 	const I = parseFloat($('.tbI').val());
-	display('#fmControl', FMSynth.spectrum(c, m, I));
+	display('#fmControl', c, m, I);
 }
 
 $('.btDraw').click(draw).end();
