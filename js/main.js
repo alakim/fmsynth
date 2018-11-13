@@ -9,7 +9,7 @@ $('head').append($($C.html.style($C.css.stylesheet({
 		width:px(600),
 		height:px(400),
 		padding:px(3),
-		margin:px(10)
+		margin:px(10, 10, 10, 50)
 	}
 }))));
 

@@ -78,6 +78,7 @@ const Vector = (function(){
 })();
 
 function knob(canvas, pnl, pos, title, range, onchange, defaultValue){
+	const btPos = pos;
 	const size = 30,
 		pos0 = 90,
 		marg = 40;
@@ -100,7 +101,7 @@ function knob(canvas, pnl, pos, title, range, onchange, defaultValue){
 			if(angle>360-marg*2) angle = 360-marg*2;
 			
 			direction.SetPolar(size*.7, angle + pos0 + marg, true);
-			marker.attr({cx:pos.x+direction.x, cy:pos.y+direction.y});
+			marker.attr({cx:btPos.x+direction.x, cy:btPos.y+direction.y});
 			const val = (range.mn+(range.mx-range.mn)*angle/(360-marg*2)).toFixed(range.precision);
 			label.attr({text:formatLabel(val)});
 			onchange(val);
@@ -110,13 +111,13 @@ function knob(canvas, pnl, pos, title, range, onchange, defaultValue){
 		}
 	};
 
-	const grad = "r(0.25, 0.25)#ccc-#888", 
-		grad2 = "r(0.25, 0.25)#aaa-#777";
+	const grad = "r(0.25, 0.25, 1) #ccc-#888", 
+		grad2 = "r(0.25, 0.25, 1) #aaa-#777";
 
 	canvas.circle(pos.x, pos.y, size).attr({fill:grad, cursor:"pointer"}).drag(drag.move, drag.start, drag.end);
 	const defAngle = pos0+marg + (360-marg*2)*(defaultValue-range.mn)/(range.mx-range.mn);
 	const direction = new Vector().SetPolar(size*.7, /*pos0+marg*/ defAngle, true);
-	const marker = canvas.circle(pos.x+direction.x, pos.y+direction.y, 3).attr({fill:"#0f0", stroke:0});
+	const marker = canvas.circle(btPos.x+direction.x, btPos.y+direction.y, 3).attr({fill:"#0f0", stroke:0});
 
 	function formatLabel(val){
 		return [title.toUpperCase(), ' = ', val].join('');
@@ -129,7 +130,6 @@ function knob(canvas, pnl, pos, title, range, onchange, defaultValue){
 
 export function display(pnl, c, m, I){ pnl = $(pnl);
 	//TODO: при перерисовке изменять только график, крутилки не трогать!
-	const spectrum = FMSynth.spectrum(c, m, I);
 	const canvas = $S(pnl[0]);
 
 	const w = pnl.width(), 
@@ -145,46 +145,54 @@ export function display(pnl, c, m, I){ pnl = $(pnl);
 	const x0 = padding, y0 = h - padding - controlsBarHeight,
 		xM = w - 2*padding, yM = padding;
 
-	canvas.path(['M', x0, y0, 'L', xM, y0].join(' ')).attr(axisAttr);
-	canvas.path(['M', x0, y0, 'L', x0, yM].join(' ')).attr(axisAttr);
+	let graph = [];
+
+	function draw(c, m, I){
+		for(let e of graph) e.remove();
+		graph = [];
+		const spectrum = FMSynth.spectrum(c, m, I);
+
+		graph.push(canvas.path(['M', x0, y0, 'L', xM, y0].join(' ')).attr(axisAttr));
+		graph.push(canvas.path(['M', x0, y0, 'L', x0, yM].join(' ')).attr(axisAttr));
+
+		const fRange = [spectrum[0].f, spectrum[spectrum.length-1].f + 1];
+		const rf = (xM - x0)/fRange[1];
+		const ra = (y0 - yM)/1;
+
+		for(let i=0; i<fRange[1]; i++){
+			const x = x0 + i*rf;
+			graph.push(canvas.path(['M', x, y0, x, y0-5].join(' ')).attr(axisAttr));
+		}
+
+		for(let i=0; i<10; i++){
+			const y = y0 - i*ra/10;
+			graph.push(canvas.path(['M', x0, y, x0+5, y].join(' ')).attr(axisAttr));
+		}
 
 
-	// console.log('spectrum:%o', spectrum);
+		spectrum.forEach((e,i)=>{
+			const fx = x0 + rf*e.f,
+				fy = y0 - ra*e.a;
 
-	const fRange = [spectrum[0].f, spectrum[spectrum.length-1].f + 1];
-	const rf = (xM - x0)/fRange[1];
-	const ra = (y0 - yM)/1;
+			graph.push(canvas.path(['M', fx, y0, 'L', fx, fy].join(' ')).attr(dataAttr));
+		});
 
-	for(let i=0; i<fRange[1]; i++){
-		const x = x0 + i*rf;
-		canvas.path(['M', x, y0, x, y0-5].join(' ')).attr(axisAttr);
 	}
 
-	for(let i=0; i<10; i++){
-		const y = y0 - i*ra/10;
-		canvas.path(['M', x0, y, x0+5, y].join(' ')).attr(axisAttr);
-	}
-
-
-	spectrum.forEach((e,i)=>{
-		const fx = x0 + rf*e.f,
-			fy = y0 - ra*e.a;
-
-		canvas.path(['M', fx, y0, 'L', fx, fy].join(' ')).attr(dataAttr);
-	});
-
-	knob(canvas, pnl, {x:50, y:h - padding - controlsBarHeight/2}, 'C', {mn:.5, mx:60, precision:1}, function(v){
+	knob(canvas, pnl, {x:50, y:h - padding - controlsBarHeight/2}, 'C', {mn:.5, mx:10, precision:1}, function(v){
 		$('.tbC').val(v);
-		display(pnl, v, m, I);
+		draw(v, m, I);
 	}, 1);
 
-	knob(canvas, pnl, {x:150, y:h - padding - controlsBarHeight/2}, 'M', {mn:.5, mx:60, precision:1}, function(v){
+	knob(canvas, pnl, {x:150, y:h - padding - controlsBarHeight/2}, 'M', {mn:.5, mx:10, precision:1}, function(v){
 		$('.tbM').val(v);
-		display(pnl, c, v, I);
+		draw(c, v, I);
 	}, 1);
 
 	knob(canvas, pnl, {x:250, y:h - padding - controlsBarHeight/2}, 'I', {mn:.5, mx:20, precision:1}, function(v){
 		$('.tbI').val(v);
-		display(pnl, c, m, v);
+		draw(c, m, v);
 	}, 1);
+
+	draw(c, m, I);
 }
